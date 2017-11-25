@@ -16,6 +16,11 @@ using UnityEngine.UI;//namespace 命名空間
     public float gameDuration = 30f;
     public float endDelay = 1.5f;
 
+    public Collider spawnCollider;
+    public ObjectPool targetObjectPool;//處理物件生成和銷毀 //ObjectPool用在大量繁殖的物件
+    public float spawnProbability = 0.7f;
+    public float spawnInterval = 1f;
+
 
     public bool IsPlaying// Property 屬性  //屬性做封裝保護  //限制誰可以改這個值
     {
@@ -55,14 +60,42 @@ using UnityEngine.UI;//namespace 命名空間
         SessionData.Restart();//重置資料庫遊玩資料
 
         float gameTimer = gameDuration;
+        float spawnTimer = 0f;//暫存變數預設0
+
         while (gameTimer > 0f)
         {
+            if (spawnTimer <= 0f)
+            {
+                if (Random.value < spawnProbability)
+                {
+                    spawnTimer = spawnInterval;
+                    Spawn();
+                }
+            }
             yield return null;//等一帪暫停，下一帪才繼續做
             gameTimer -= Time.deltaTime;//deltaTime -> 一秒
+            spawnTimer -= Time.deltaTime;
             timerBar.fillAmount = gameTimer / gameDuration;
+            }
+            IsPlaying = false;
+            yield return StartCoroutine(uiController.HidePlayerUI());
         }
-        IsPlaying = false;
-        yield return StartCoroutine(uiController.HidePlayerUI());
+
+    private void Spawn()
+    {
+        GameObject target = targetObjectPool.GetGameObjectFromPool();
+        target.transform.position = SpawnPosition();
+    }
+
+    private Vector3 SpawnPosition()//若方法不會回傳值Vector3改成void
+    {
+        Vector3 center = spawnCollider.bounds.center;//中心
+        Vector3 extents = spawnCollider.bounds.extents;//寬度//長寬高都回傳一半
+        float x = Random.Range(center.x - extents.x, center.x + center.x);
+        float y = Random.Range(center.y - extents.y, center.y + center.y);
+        float z = Random.Range(center.z - extents.z, center.z + center.z);
+        return new Vector3(x, y, z);
+
     }
 
     private IEnumerator EndPhase()//9
