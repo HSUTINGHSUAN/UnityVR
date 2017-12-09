@@ -1,13 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using VRStandardAssets.Utils;//UIFader
-using VRStandardAssets.Common;//SessionData
+using VRStandardAssets.Utils;
+using VRStandardAssets.Common;
 using UnityEngine.UI;
 public class UIController : MonoBehaviour
 {
 
-    public UIFader introUI;//UIFader ->做淡入淡出
+    public UIFader introUI;
     public UIFader outroUI;
     public UIFader playerUI;
     public Text totalScore;
@@ -18,7 +18,6 @@ public class UIController : MonoBehaviour
         yield return StartCoroutine(introUI.InteruptAndFadeIn());
     }
 
-
     public IEnumerator HideIntroUI()
     {
         yield return StartCoroutine(introUI.InteruptAndFadeOut());
@@ -26,16 +25,14 @@ public class UIController : MonoBehaviour
 
     public IEnumerator ShowOutroUI()
     {
-        totalScore.text = SessionData.Score.ToString();
+        totalScore.text = SessionData.Score.ToString(); //VRStandardAssets.Common 內部元件
         highScore.text = SessionData.HighScore.ToString();
         yield return StartCoroutine(outroUI.InteruptAndFadeIn());
     }
-
     public IEnumerator HideOutroUI()
     {
         yield return StartCoroutine(outroUI.InteruptAndFadeOut());
     }
-
 
     public IEnumerator ShowPlayerUI()
     {
@@ -46,5 +43,4 @@ public class UIController : MonoBehaviour
     {
         yield return StartCoroutine(playerUI.InteruptAndFadeOut());
     }
-
 }

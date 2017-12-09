@@ -10,36 +10,33 @@ public class ShootingTarget : MonoBehaviour
     public int score = 1;
     public float destroyTimeOutDuration = 2f;
     public float timeOutDuration = 2f;
-    //宣告event
-    public event Action<ShootingTarget> OnRemove; //ShootingTarget -> 註冊參數
+    public event Action<ShootingTarget> OnRemove;
     private Transform cameraTransform;
     private AudioSource audioSource;
     private VRInteractiveItem vrInteractiveItem;
     private Renderer mRenderer;
     private Collider mCollider;
     public AudioClip destroyClip;
-    public GameObject destroyPrefab;//碎掉後，再產生一個新的，不重複使用
+    public GameObject destroyPrefab;
     public AudioClip spawnClip;
     public AudioClip missedClip;
-
     private bool isEnding;
 
     private void Awake()
     {
         cameraTransform = Camera.main.transform;
         audioSource = GetComponent<AudioSource>();
-        vrInteractiveItem = GetComponent<VRInteractiveItem>();//偵測物體有沒有打到
+        vrInteractiveItem = GetComponent<VRInteractiveItem>();
         mRenderer = GetComponent<Renderer>();
         mCollider = GetComponent<Collider>();
-
     }
 
-    private void OnEnable()//事件用+=
+    private void OnEnable()
     {
         vrInteractiveItem.OnDown += HandleDown;
     }
 
-    private void OnDisable()//有+=就要有-=
+    private void OnDisable()
     {
         vrInteractiveItem.OnDown -= HandleDown;
     }
@@ -57,23 +54,26 @@ public class ShootingTarget : MonoBehaviour
     private IEnumerator OnHit()
     {
         if (isEnding)
-            yield break;//直接跳脫coroutine
+        {
+            yield break;
+        }
         isEnding = true;
         mRenderer.enabled = false;
         mCollider.enabled = false;
         audioSource.clip = destroyClip;
         audioSource.Play();
         SessionData.AddScore(score);
-        GameObject destroyTarget = Instantiate<GameObject>(destroyPrefab,transform.position,transform.rotation);//Instantiate -> 物件產生用的API
-        Destroy(destroyTarget, destroyTimeOutDuration);
-        yield return new WaitForSeconds(destroyClip.length);//等待音效播放的時間
+        GameObject destroyedTarget = Instantiate<GameObject>(destroyPrefab, transform.position, transform.rotation);
+        Destroy(destroyedTarget, destroyTimeOutDuration);
+        yield return new WaitForSeconds(destroyClip.length);
         if (OnRemove != null)
         {
-            OnRemove(this);//觸發事件必須傳入指定參數ShootingTarget
+            OnRemove(this);
         }
+
     }
 
-    public void Restart()
+    public  void Restart(float gameTimeRemaining)
     {
         mRenderer.enabled = true;
         mCollider.enabled = true;
@@ -81,15 +81,18 @@ public class ShootingTarget : MonoBehaviour
         audioSource.clip = spawnClip;
         audioSource.Play();
         transform.LookAt(cameraTransform.position);
-        StartCoroutine(MissTarget());//等待2秒
-        //StartCoroutine(GameOver());
+        StartCoroutine(MissTarget());
+        StartCoroutine(GameOver(gameTimeRemaining));
     }
 
     private IEnumerator MissTarget()
     {
-        yield return new WaitForSeconds(timeOutDuration);//等待秒數
+        yield return new WaitForSeconds(timeOutDuration);
         if (isEnding)
+        {
             yield break;
+        }
+
         isEnding = true;
         mRenderer.enabled = false;
         mCollider.enabled = false;
@@ -97,7 +100,20 @@ public class ShootingTarget : MonoBehaviour
         audioSource.Play();
         yield return new WaitForSeconds(missedClip.length);
         if (OnRemove != null)
+        {
             OnRemove(this);
+        }
+    }
+
+
+    private IEnumerator GameOver(float gameTimeRemaining)
+    {
+        yield return new WaitForSeconds(gameTimeRemaining);
+        if (isEnding) yield break;
+        isEnding = true;
+        mRenderer.enabled = false;
+        mCollider.enabled = false;
+        if (OnRemove != null) OnRemove(this);
     }
 
 }
